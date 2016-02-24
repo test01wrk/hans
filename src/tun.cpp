@@ -75,6 +75,8 @@ Tun::Tun(const char *device, int mtu)
 #ifdef WIN32
     snprintf(cmdline, sizeof(cmdline), "netsh interface ipv4 set subinterface \"%s\" mtu=%d", this->device, mtu);
     winsystem(cmdline);
+#elif ANDROID
+    snprintf(cmdline, sizeof(cmdline), "/system/bin/ifconfig %s mtu %u", this->device, mtu);
 #else
     snprintf(cmdline, sizeof(cmdline), "/sbin/ifconfig %s mtu %u", this->device, mtu);
     if (system(cmdline) != 0)
@@ -101,7 +103,11 @@ void Tun::setIp(uint32_t ip, uint32_t destIp, bool includeSubnet)
     if (!tun_set_ip(fd, ip, ip & 0xffffff00, 0xffffff00))
         syslog(LOG_ERR, "could not set tun device driver ip address: %s", tun_last_error());
 #elif LINUX
+#ifdef ANDROID
+    snprintf(cmdline, sizeof(cmdline), "/system/bin/ifconfig %s %s netmask 255.255.255.0", device, ips.c_str());
+#else
     snprintf(cmdline, sizeof(cmdline), "/sbin/ifconfig %s %s netmask 255.255.255.0", device, ips.c_str());
+#endif
     if (system(cmdline) != 0)
         syslog(LOG_ERR, "could not set tun device ip address");
 #else

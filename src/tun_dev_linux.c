@@ -86,8 +86,11 @@ static int tun_open_common(char *dev, int istun)
 {
     struct ifreq ifr;
     int fd;
-
+#ifdef ANDROID
+    if ((fd = open("/dev/tun", O_RDWR)) < 0)
+#else
     if ((fd = open("/dev/net/tun", O_RDWR)) < 0)
+#endif
        return tun_open_common0(dev, istun);
 
     memset(&ifr, 0, sizeof(ifr));
