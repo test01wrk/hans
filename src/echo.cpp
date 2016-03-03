@@ -64,8 +64,18 @@ void Echo::send(int payloadLength, uint32_t realIp, bool reply, uint16_t id, uin
     target.sin_family = AF_INET;
     target.sin_addr.s_addr = htonl(realIp);
 
+    // TODO encrypt sendPayload, update payloadLength
+    // char *encypted = encrypt(sendPayloadBuffer(), payloadLength)
+    // payloadLength = sizeof(encypted)
+
     if (payloadLength + sizeof(IpHeader) + sizeof(EchoHeader) > bufferSize)
         throw Exception("packet too big");
+
+    // memcpy(sendPayloadBuffer(), encypted, payloadLength);
+    char *pl = sendPayloadBuffer();
+    for (int i = 0; i < payloadLength; i++) {
+        pl[i] ^= 0xF4;
+    }
 
     EchoHeader *header = (EchoHeader *)(sendBuffer + sizeof(IpHeader));
     header->type = reply ? 0: 8;
@@ -94,6 +104,15 @@ int Echo::receive(uint32_t &realIp, bool &reply, uint16_t &id, uint16_t &seq)
 
     if (dataLength < sizeof(IpHeader) + sizeof(EchoHeader))
         return -1;
+
+    // TODO decrypt payload, update payloadLength
+    // char *decrypted = decrypt(receivePayloadBuffer(), dataLength)
+    // dataLength = sizeof(decrypted)
+    // memcpy(receivePayloadBuffer(), decrypted, dataLength);
+    char *pl = receivePayloadBuffer();
+    for (int i = 0; i < dataLength; i++) {
+        pl[i] ^= 0xF4;
+    }
 
     EchoHeader *header = (EchoHeader *)(receiveBuffer + sizeof(IpHeader));
     if ((header->type != 0 && header->type != 8) || header->code != 0)
